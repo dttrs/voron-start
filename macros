@@ -1,5 +1,5 @@
 [gcode_macro PRIME]
-description:  print prep — heat, soak, QGL, mesh
+description:  print prep — heat, soak, and  QGL
 gcode:
     {% set mat = params.M|default("ABS")|upper %}
 
@@ -32,10 +32,7 @@ gcode:
 
     M118 Homing and Quad Gantry Leveling...
     G32                          ; Handles home and leveling
-
-    M118 Performing Adaptive Bed Mesh...
-    BED_MESH_CLEAR
-    BED_MESH_CALIBRATE ADAPTIVE=1
+ 
 
     M118 PREP sequence complete — ready to print!
     
@@ -65,7 +62,10 @@ gcode:
 #   Use PRINT_START for the slicer starting script - please customise for your slicer of choice
 # mesh has to go here bc cant detect objects if we are doing adatpvie
 gcode:
-    
-    SKEW_PROFILE LOAD=Califlower   ; load skew correction at print start
+
+    SKEW_PROFILE LOAD=Califlower   ; load skew correction at print start 
+    M118 Performing Adaptive Bed Mesh...
+    BED_MESH_CLEAR
+    BED_MESH_CALIBRATE ADAPTIVE=1
     G32                             ; home all axes
     G1 Z20 F3000                    ; lift nozzle away from bed
