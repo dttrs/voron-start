@@ -1,0 +1,71 @@
+[gcode_macro PRIME]
+description:  print prep — heat, soak, QGL, mesh
+gcode:
+    {% set mat = params.M|default("ABS")|upper %}
+
+    M118 Preparing for {mat}...
+
+    {% if mat == "PLA" %}
+        M104 S200 ; set extruder to 200
+        M140 S60  ; set bed to 60
+        M190 S60  ; wait for bed to reach 60
+        M117 Heating PLA
+    {% elif mat == "ABS" %}
+        M104 S245
+        M140 S110
+        M190 S110
+        M117 Heating ABS
+    {% elif mat == "PETG" %}
+        M104 S235
+        M140 S80
+        M190 S80
+        M117 Heating PETG
+    {% else %}
+        M117 Unknown material! Defaulting to ABS
+        M104 S245
+        M140 S110
+        M190 S110
+    {% endif %}
+
+    M118 Bed soaking for 35 minutes...
+    G4 S2100                     ; Wait 35 minutes (2100 sec)
+
+    M118 Homing and Quad Gantry Leveling...
+    G32                          ; Handles home and leveling
+
+    M118 Performing Adaptive Bed Mesh...
+    BED_MESH_CLEAR
+    BED_MESH_CALIBRATE ADAPTIVE=1
+
+    M118 PREP sequence complete — ready to print!
+    
+     
+  
+     
+
+[gcode_macro G32]
+gcode:
+    BED_MESH_CLEAR
+    G28
+    QUAD_GANTRY_LEVEL
+    G28
+    ##  Uncomment for for your size printer:
+    #--------------------------------------------------------------------
+    ##  Uncomment for 250mm build
+    #G0 X125 Y125 Z30 F3600
+    
+    ##  Uncomment for 300 build
+    G0 X150 Y150 Z30 F3600
+    
+    ##  Uncomment for 350mm build
+    #G0 X175 Y175 Z30 F3600
+    #--------------------------------------------------------------------
+   
+[gcode_macro PRINT_START]
+#   Use PRINT_START for the slicer starting script - please customise for your slicer of choice
+# mesh has to go here bc cant detect objects if we are doing adatpvie
+gcode:
+    
+    SKEW_PROFILE LOAD=Califlower   ; load skew correction at print start
+    G32                             ; home all axes
+    G1 Z20 F3000                    ; lift nozzle away from bed
