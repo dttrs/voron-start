@@ -1,41 +1,51 @@
 [gcode_macro PRIME]
-description:  print prep — heat, soak, and  QGL
+description: Full print prep — heat, soak, QGL, mesh
 gcode:
     {% set mat = params.M|default("ABS")|upper %}
 
     M118 Preparing for {mat}...
 
     {% if mat == "PLA" %}
-        M104 S200 ; set extruder to 200
-        M140 S60  ; set bed to 60
-        M190 S60  ; wait for bed to reach 60
-        M117 Heating PLA
+        M140 S60
+        M190 S60
+        M104 S200
+        M109 S200
+        M117 PLA Ready
     {% elif mat == "ABS" %}
-        M104 S245
         M140 S110
         M190 S110
-        M117 Heating ABS
+        M104 S245
+        M109 S245
+        M117 ABS Ready
     {% elif mat == "PETG" %}
-        M104 S235
         M140 S80
         M190 S80
-        M117 Heating PETG
+        M104 S235
+        M109 S235
+        M117 PETG Ready
     {% else %}
-        M117 Unknown material! Defaulting to ABS
-        M104 S245
+        M117 Unknown material — defaulting to ABS
         M140 S110
         M190 S110
+        M104 S245
+        M109 S245
     {% endif %}
 
-    M118 Bed soaking for 35 minutes...
-    G4 S2100                     ; Wait 35 minutes (2100 sec)
+    M118 Starting bed soak (35 min)...
+    {% for i in range(35) %}
+        M118 Soaking... {{35 - i}} minutes left
+        G4 S60
+    {% endfor %}
 
     M118 Homing and Quad Gantry Leveling...
-    G32                          ; Handles home and leveling
- 
+    G32
+    G1 Z20 F3000
 
-    M118 PREP sequence complete — ready to print!
-    
+    M118 Performing Bed Mesh...
+    BED_MESH_CLEAR
+    BED_MESH_CALIBRATE     ; use ADAPTIVE=1 in PRINT_START, not here
+
+    M118 PRIME complete — ready for print!
      
   
      
@@ -63,9 +73,10 @@ gcode:
 # mesh has to go here bc cant detect objects if we are doing adatpvie
 gcode:
 
-    SKEW_PROFILE LOAD=Califlower   ; load skew correction at print start 
-    M118 Performing Adaptive Bed Mesh...
-    BED_MESH_CLEAR
+    [gcode_macro PRINT_START]
+gcode:
+    SKEW_PROFILE LOAD=Califlower
     BED_MESH_CALIBRATE ADAPTIVE=1
-    G32                             ; home all axes
-    G1 Z20 F3000                    ; lift nozzle away from bed
+    G32
+    G1 Z20 F3000
+
