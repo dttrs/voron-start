@@ -1,53 +1,30 @@
-[gcode_macro PRIME]
-description: Full print prep — heat, soak, QGL, mesh
+[gcode_macro SM]
 gcode:
-    {% set mat = params.M|default("ABS")|upper %}
-
-    M118 Preparing for {mat}...
+    
+    {% set mat = params.M|default("ABS") %}
 
     {% if mat == "PLA" %}
-        M140 S60
-        M190 S60
-        M104 S200
-        M109 S200
-        M117 PLA Ready
+        M104 S200           ; Set hotend temp for PLA
+        M140 S60            ; Set bed temp for PLA
+        M190 S60            ; Wait for bed to reach temp
+        M117 Printing PLA
     {% elif mat == "ABS" %}
+        M104 S245
         M140 S110
         M190 S110
-        M104 S245
-        M109 S245
-        M117 ABS Ready
+        M117 Printing ABS
     {% elif mat == "PETG" %}
+        M104 S235
         M140 S80
         M190 S80
-        M104 S235
-        M109 S235
-        M117 PETG Ready
+        M117 Printing PETG
     {% else %}
-        M117 Unknown material — defaulting to ABS
+        M117 Unknown material! Defaulting to ABS
+        M104 S245
         M140 S110
         M190 S110
-        M104 S245
-        M109 S245
     {% endif %}
 
-    M118 Starting bed soak (35 min)...
-    {% for i in range(35) %}
-        M118 Soaking... {{35 - i}} minutes left
-        G4 S60
-    {% endfor %}
-
-    M118 Homing and Quad Gantry Leveling...
-    G32
-    G1 Z20 F3000
-
-    M118 Performing Bed Mesh...
-    BED_MESH_CLEAR
-    BED_MESH_CALIBRATE     ; use ADAPTIVE=1 in PRINT_START, not here
-
-    M118 PRIME complete — ready for print!
-     
-  
      
 
 [gcode_macro G32]
@@ -68,14 +45,28 @@ gcode:
     #G0 X175 Y175 Z30 F3600
     #--------------------------------------------------------------------
    
-[gcode_macro PRINT_START]
-#   Use PRINT_START for the slicer starting script - please customise for your slicer of choice
-# mesh has to go here bc cant detect objects if we are doing adatpvie
+[gcode_macro G32]
 gcode:
-
-    [gcode_macro PRINT_START]
+    BED_MESH_CLEAR
+    G28
+    QUAD_GANTRY_LEVEL
+    G28
+    ##  Uncomment for for your size printer:
+    #--------------------------------------------------------------------
+    ##  Uncomment for 250mm build
+    #G0 X125 Y125 Z30 F3600
+    
+    ##  Uncomment for 300 build
+    G0 X150 Y150 Z30 F3600
+    
+    ##  Uncomment for 350mm build
+    #G0 X175 Y175 Z30 F3600
+    #--------------------------------------------------------------------
+   
+[gcode_macro PRINT_START]
 gcode:
     SKEW_PROFILE LOAD=Califlower
+    G32
     BED_MESH_CALIBRATE ADAPTIVE=1
     G32
     G1 Z20 F3000
