@@ -49,6 +49,6 @@ gcode:
     SKEW_PROFILE LOAD=Califlower
     G32
     BED_MESH_CALIBRATE ADAPTIVE=1
-    G32
+    G28
     G1 Z20 F3000
 
